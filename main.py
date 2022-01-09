@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import messagebox
 from random import randint, shuffle
+import json
 letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
            'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
            'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
@@ -54,21 +55,48 @@ def add_check():
     website = website_input.get()
     user = user_input.get()
     password = password_input.get()
+    json_dict = {
+        website: {
+            "User/Email": user,
+            "Password": password,
+        }
+    }
     if user == "" or website == "" or password == "":
         messagebox.showerror(title="Missing Info", message="Missing Information: "
                                                            "\nmake sure you have all three forms filled out")
     else:
-        is_ok = messagebox.askyesno(title=website, message=f"Username/E-mail: {user}"
-                                                           f"\nPassword: {password}\n Is this information correct?")
-        if is_ok:
-            with open("saved_accounts.txt", mode="a") as file:
-                file.write(f"{website}  |  {user}  |  {password}\n")
-                password_input.delete(0, END)
-                website_input.delete(0, END)
-                user_input.delete(0, END)
-                saved_t = "Save Success"
-                saved_m = " Successful Save: \n     New Info saved to passwords file     "
-                pop_up(saved_t,saved_m)
+        try:
+            with open("saved_accounts.json", "r") as file:
+                data = json.load(file)
+                data.update(json_dict)
+
+        except FileNotFoundError:
+            data = json_dict
+
+        with open("saved_accounts.json", "w") as file:
+            json.dump(data, file, indent=4)
+
+        password_input.delete(0, END)
+        website_input.delete(0, END)
+        user_input.delete(0, END)
+
+        saved_t = "Save Success"
+        saved_m = " Successful Save: \n     New Info saved to passwords file     "
+        pop_up(saved_t, saved_m)
+
+
+# -------------------------- Load Json Data ---------------------- #
+def load_data():
+    try:
+        with open("saved_accounts.json") as file:
+            data = json.load(file)
+            website = data[website_input.get()]
+    except KeyError:
+        messagebox.showerror("Website Not Found", "Sorry the website was not found in your saved folders"
+                                                  "\nCapitalization matters. Try upper or lowercasing the website name")
+    else:
+        user_input.insert(0, website["User/Email"])
+        password_input.insert(0, website["Password"])
 
 
 # -------------------------- Window Set-UP ----------------------- #
@@ -90,8 +118,10 @@ canvas.grid(column=2, row=1, columnspan=3)
 
 website_label = Label(text="Website:", font=FONT, anchor="e", width=15)
 website_label.grid(column=1, row=2)
-website_input = Entry(width=41, takefocus=1, font=FONT)
-website_input.grid(column=2, row=2, columnspan=2, pady=PAD, ipady=PAD)
+website_input = Entry(width=22, takefocus=1, font=FONT)
+website_input.grid(column=2, row=2, pady=PAD, ipady=PAD)
+search_button = Button(text="Search", width=13, font=FONT, activebackground=HOVER, command=load_data)
+search_button.grid(column=3, row=2, pady=PAD)
 
 user_label = Label(text="E-mail/Username:", font=FONT, anchor="e", width=15)
 user_label.grid(column=1, row=3)
@@ -105,7 +135,7 @@ password_input.grid(column=2, row=4, ipady=PAD)
 generate_button = Button(text="Generate", width=13, font=FONT, command=password_generator, activebackground=HOVER)
 generate_button.grid(column=3, row=4)
 
-add_button = Button(text="Add", width=40, font=FONT, command=add_check, activebackground=HOVER)
+add_button = Button(text="Add or Update", width=40, font=FONT, command=add_check, activebackground=HOVER)
 add_button.grid(column=2, row=8, columnspan=2, pady=PAD)
 
 
