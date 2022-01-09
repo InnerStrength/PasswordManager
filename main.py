@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 from random import randint, shuffle
 letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
            'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
@@ -15,25 +16,71 @@ PAD = 3
 
 # -------------------------- Password Generator -------------------- #
 def password_generator():
-    global password
-    password = []
+    generated_password = []
     for i in range(10):
-        password.append(letters[randint(0, len(letters)-1)])
+        generated_password.append(letters[randint(0, len(letters)-1)])
     for i in range(4):
-        password.append(numbers[randint(0, len(numbers)-1)])
-        password.append(symbols[randint(0, len(symbols)-1)])
-    shuffle(password)
+        generated_password.append(numbers[randint(0, len(numbers)-1)])
+        generated_password.append(symbols[randint(0, len(symbols)-1)])
+    shuffle(generated_password)
+
+    # ---------------- Randomizes Password ----------------#
+    generated_password = ''.join(generated_password)
     password_input.delete(0, END)
-    password_input.insert(0, ''.join(password))
-    print(password)
+    password_input.insert(0, generated_password)
+
+    # ---------------- Copies to Clipboard ----------------#
+    clipboard = Tk()
+    clipboard.withdraw()
+    clipboard.clipboard_clear()
+    clipboard.clipboard_append(generated_password)
+
+
+# -------------------------- Pop-Up Generator -------------------- #
+def pop_up(popup_title, popup_text):
+    popup = Toplevel(takefocus=0, padx=20, pady=10)
+    popup.geometry("250x100")
+    popup.resizable(width=False, height=False)
+    window.eval(f'tk::PlaceWindow {popup} 300x150')
+    popup.title(popup_title)
+    pop = Label(popup, text=popup_text)
+    pop_but = Button(popup, text="Ok", width=15, command=popup.destroy, activebackground=HOVER)
+    pop_but.grid(column=2, row=2, pady=10)
+    pop.grid(column=2, row=1)
+
+
+# -------------------------- Save Info --------------------------- #
+def add_check():
+    website = website_input.get()
+    user = user_input.get()
+    password = password_input.get()
+    if user == "" or website == "" or password == "":
+        messagebox.showerror(title="Missing Info", message="Missing Information: "
+                                                           "\nmake sure you have all three forms filled out")
+    else:
+        is_ok = messagebox.askyesno(title=website, message=f"Username/E-mail: {user}"
+                                                           f"\nPassword: {password}\n Is this information correct?")
+        if is_ok:
+            with open("saved_accounts.txt", mode="a") as file:
+                file.write(f"{website}  |  {user}  |  {password}\n")
+                password_input.delete(0, END)
+                website_input.delete(0, END)
+                user_input.delete(0, END)
+                saved_t = "Save Success"
+                saved_m = " Successful Save: \n     New Info saved to passwords file     "
+                pop_up(saved_t,saved_m)
 
 
 # -------------------------- Window Set-UP ----------------------- #
 window = Tk()
-window.minsize(width=800, height=500)
-window.maxsize(width=800, height=500)
+x_Left = int(window.winfo_screenwidth()/2 - 400)
+y_Top = int(window.winfo_screenheight()/2 - 250)
+window.geometry("+{}+{}".format(x_Left, y_Top))
+window.resizable(width=False, height=False)
 window.config(padx=80, pady=30)
-window.title("Password Manager")
+window.title("                                                                                "
+             "                                    Password Manager")
+
 
 # -------------------------- GUI Set-UP -------------------------- #
 canvas = Canvas(window, width=500, height=300)
@@ -51,14 +98,14 @@ user_label.grid(column=1, row=3)
 user_input = Entry(width=41, font=FONT)
 user_input.grid(column=2, row=3, columnspan=2, pady=PAD, ipady=PAD)
 
-password_label = Label(text="Password:", font=FONT, anchor="e", width=15)
+password_label = Label(text="Generate Pass:", font=FONT, anchor="e", width=15)
 password_label.grid(column=1, row=4)
 password_input = Entry(width=22, font=FONT)
 password_input.grid(column=2, row=4, ipady=PAD)
-generate_button = Button(text="Generate", width=13, font=FONT, command=password_generator)
+generate_button = Button(text="Generate", width=13, font=FONT, command=password_generator, activebackground=HOVER)
 generate_button.grid(column=3, row=4)
 
-add_button = Button(text="Add", width=40, font=FONT)
+add_button = Button(text="Add", width=40, font=FONT, command=add_check, activebackground=HOVER)
 add_button.grid(column=2, row=8, columnspan=2, pady=PAD)
 
 
